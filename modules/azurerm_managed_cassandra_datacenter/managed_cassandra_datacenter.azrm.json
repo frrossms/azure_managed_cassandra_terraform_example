@@ -1,0 +1,55 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "clusterName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the Cassandra cluster to create this data center in."
+            }
+        },
+        "dataCenterName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name for the Cassandra data center to be created."
+            }
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Region to create the data center in."
+            }
+        },
+        "delegatedSubnetId": {
+            "type": "string",
+            "metadata": {
+                "description": "ARM resource id of a subnet that this cluster's NICs should be attached to."
+            }
+        },
+        "nodeCount": {
+            "type": "int",
+            "metadata": {
+                "description": "The number of nodes to create in this cluster."
+            }
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.DocumentDB/cassandraClusters/dataCenters",
+            "name": "[concat(parameters('clusterName'), '/', parameters('dataCenterName'))]",
+            "location": "[parameters('location')]",
+            "apiVersion": "2021-03-01-preview",
+            "properties": {
+                "dataCenterLocation": "[parameters('location')]",
+                "delegatedSubnetId": "[parameters('delegatedSubnetId')]",
+                "nodeCount": "[parameters('nodeCount')]"
+            }
+        }
+    ],
+    "outputs": {
+        "id": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.DocumentDB/cassandraClusters/dataCenters', parameters('clusterName'), parameters('dataCenterName')))]"
+        }
+    }
+}

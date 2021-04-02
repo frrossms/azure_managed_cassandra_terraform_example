@@ -1,0 +1,56 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "name": {
+            "type": "string",
+            "metadata": {
+                "description": "The name for the Cassandra cluster to be created."
+            }
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Region to create the cluster in."
+            }
+        },
+        "initialCassandraAdminPassword": {
+            "type": "string",
+            "metadata": {
+                "description": "Initial password to set on the cluster for the admin account."
+            }
+        },
+        "delegatedManagementSubnetId": {
+            "type": "string",
+            "metadata": {
+                "description": "ARM resource id of a subnet that this cluster's management NIC should be attached to."
+            }
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.DocumentDB/cassandraClusters",
+            "name": "[parameters('name')]",
+            "location": "[parameters('location')]",
+            "apiVersion": "2021-03-01-preview",
+            "properties": {
+                "initialCassandraAdminPassword": "[parameters('initialCassandraAdminPassword')]",
+                "delegatedManagementSubnetId": "[parameters('delegatedManagementSubnetId')]"
+            }
+        }
+    ],
+    "outputs": {
+        "clusterName": {
+            "type": "string",
+            "value": "[parameters('name')]"
+        },
+        "clusterId": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.DocumentDB/cassandraClusters', parameters('name')))].id"
+        },
+        "clusterPrometheusEndpoint": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.DocumentDB/cassandraClusters', parameters('name'))).prometheusEndpoint.ipAddress]"
+        }
+    }
+}
