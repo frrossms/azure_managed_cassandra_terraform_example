@@ -1,0 +1,83 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "clusterName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name for the Cassandra cluster to be created."
+            }
+        },
+        "clusterLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "Region to create the cluster in."
+            }
+        },
+        "initialCassandraAdminPassword": {
+            "type": "string",
+            "metadata": {
+                "description": "Initial password to set on the cluster for the admin account."
+            }
+        },
+        "delegatedManagementSubnetId": {
+            "type": "string",
+            "metadata": {
+                "description": "ARM resource id of a subnet that this cluster's management NIC should be attached to."
+            }
+        },
+        "dataCenters": {
+            "type": "array",
+            "metadata": {
+                "description": "Object describing the data centers."
+            }
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.DocumentDB/cassandraClusters",
+            "name": "[parameters('clusterName')]",
+            "location": "[parameters('clusterLocation')]",
+            "apiVersion": "2021-03-01-preview",
+            "properties": {
+                "initialCassandraAdminPassword": "[parameters('initialCassandraAdminPassword')]",
+                "delegatedManagementSubnetId": "[parameters('delegatedManagementSubnetId')]"
+            }
+        },
+        {
+            "type": "Microsoft.DocumentDB/cassandraClusters/dataCenters",
+            "dependsOn": [
+                "[resourceId('Microsoft.DocumentDB/cassandraClusters/', parameters('clusterName'))]"
+            ],
+            "copy": {
+                "name": "dc",
+                "count": "[length(parameters('dataCenters'))]"
+            },
+            "name": "[concat(parameters('clusterName'), '/', parameters('dataCenters')[copyIndex()].name)]",
+            "apiVersion": "2021-03-01-preview",
+            "properties": {
+                "dataCenterLocation": "[parameters('dataCenters')[copyIndex()].location]",
+                "delegatedSubnetId": "[parameters('dataCenters')[copyIndex()].subnet_id]",
+                "nodeCount": "[parameters('dataCenters')[copyIndex()].node_count]"
+            }
+        }
+    ],
+    "outputs": {
+        "clusterName": {
+            "type": "string",
+            "value": "[parameters('clusterName')]"
+        },
+        "clusterId": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.DocumentDB/cassandraClusters', parameters('clusterName')))].id"
+        },
+        "clusterPrometheusEndpoint": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.DocumentDB/cassandraClusters', parameters('clusterName'))).prometheusEndpoint.ipAddress]"
+        },
+        "seedNodes": {
+            "type": "array",
+            "value": "[reference(resourceId('Microsoft.DocumentDB/cassandraClusters', parameters('clusterName'))).seedNodes]"
+        }
+    }
+}
